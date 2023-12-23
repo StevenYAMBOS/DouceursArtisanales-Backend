@@ -6,7 +6,6 @@ import (
 	"os"
 	"strconv"
 	"time"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stevenyambos/hmmm-backend/models"

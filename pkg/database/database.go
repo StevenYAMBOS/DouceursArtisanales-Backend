@@ -8,7 +8,6 @@ import (
 	"os"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-	// "github.com/joho/godotenv"
 )
 
 
@@ -21,7 +20,6 @@ func InitDB() {
         log.Fatal("Impossible d'accéder au fichier `.env`.")
     }
     dsn := os.Getenv("DATABASE_CREDENTIALS")
-    // dsn := "user=stevenyambos password=Zk9c3FzsP94d8K dbname=hmmmdb sslmode=disable"
     db, err := sql.Open("postgres", dsn)
     if err != nil {
         log.Fatal(err)
