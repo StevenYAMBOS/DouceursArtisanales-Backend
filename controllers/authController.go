@@ -42,8 +42,8 @@ func Protected() fiber.Handler {
     }
 }
 
-func UserProfile(c *fiber.Ctx) error {
-	return c.SendString("Bienvenue sur ton profile $`{username}` !")
+func Home(c *fiber.Ctx) error {
+	return c.SendString("Bienvenue sur Douceurs Artisanales !")
 }
 
 func Register(c *fiber.Ctx) error {

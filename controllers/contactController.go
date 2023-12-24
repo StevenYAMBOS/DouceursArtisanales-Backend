@@ -53,11 +53,11 @@ func sendEmail(senderEmail string, contact models.Contact) error {
 		"MIME-Version: 1.0\r\n" +
 		"Content-Type: text/html; charset=utf-8\r\n" +
 		"Subject: " + mime.QEncoding.Encode("UTF-8", contact.Subject) + "\r\n\r\n" +
-		"<p><i>Formulaire de contact DouceursArtisanales.com:</i></p>" +
+		"<p><i>Formulaire de contact DouceursArtisanales.fr</i></p>" +
 		"<p><strong>Expéditeur:</strong> " + senderEmail + "</p>" +
 		"<p><strong>Nom complet:</strong> " + contact.Username + "</p>" +
-		"<p><strong>Objet:<strong> " + contact.Subject + "</i></p>" +
-		"<p><strong>Message:<strong> " + contact.Message + "</p>",
+		"<p><strong>Objet:</strong> " + contact.Subject + "</i></p>" +
+		"<p><strong>Message:</strong> " + contact.Message + "</p>",
 	)
 
 	// Configuration de l'adresse e-mail expéditeur

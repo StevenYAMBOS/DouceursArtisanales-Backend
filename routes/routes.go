@@ -11,6 +11,6 @@ func Setup(app *fiber.App) {
 	app.Post("/login", controllers.Login)
 	app.Get("/user-profile", controllers.Protected(), controllers.User)
 	app.Post("/contact", controllers.ContactForm)
-	app.Get("/", controllers.UserProfile)
+	app.Get("/", controllers.Home)
 	app.Post("/logout", controllers.Logout)
 }
