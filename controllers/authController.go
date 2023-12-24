@@ -3,43 +3,43 @@ package controllers
 import (
 	"database/sql"
 	"fmt"
-	"os"
-	"strconv"
-	"time"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stevenyambos/hmmm-backend/models"
 	"github.com/stevenyambos/hmmm-backend/pkg/database"
 	"golang.org/x/crypto/bcrypt"
+	"os"
+	"strconv"
+	"time"
 )
 
 var SecretKey = os.Getenv("SECRET_KEY")
 
 // Middleware pour rendre la route /user-profile privée.
 func Protected() fiber.Handler {
-    return func(c *fiber.Ctx) error {
-        cookie := c.Cookies("jwt")
-        if cookie == "" {
-            // Aucun token trouvé dans les cookies, renvoie une erreur d'authentification
-            c.Status(fiber.StatusUnauthorized)
-            return c.JSON(fiber.Map{"message": "Authentification requise pour accéder à cet espace."})
-        }
+	return func(c *fiber.Ctx) error {
+		cookie := c.Cookies("jwt")
+		if cookie == "" {
+			// Aucun token trouvé dans les cookies, renvoie une erreur d'authentification
+			c.Status(fiber.StatusUnauthorized)
+			return c.JSON(fiber.Map{"message": "Authentification requise pour accéder à cet espace."})
+		}
 
-        // Vérifie et parse le token
-        _, err := jwt.Parse(cookie, func(token *jwt.Token) (interface{}, error) {
-            // Clé secrète pour la vérification de la signature
-            return []byte(SecretKey), nil
-        })
+		// Vérifie et parse le token
+		_, err := jwt.Parse(cookie, func(token *jwt.Token) (interface{}, error) {
+			// Clé secrète pour la vérification de la signature
+			return []byte(SecretKey), nil
+		})
 
-        if err != nil {
-            // Erreur de vérification du token, renvoie une erreur d'authentification
-            c.Status(fiber.StatusUnauthorized)
-            return c.JSON(fiber.Map{"message": "Token JWT invalide."})
-        }
+		if err != nil {
+			// Erreur de vérification du token, renvoie une erreur d'authentification
+			c.Status(fiber.StatusUnauthorized)
+			return c.JSON(fiber.Map{"message": "Token JWT invalide."})
+		}
 
-        // Continue vers le gestionnaire de route si l'authentification réussit
-        return c.Next()
-    }
+		// Continue vers le gestionnaire de route si l'authentification réussit
+		return c.Next()
+	}
 }
 
 func Home(c *fiber.Ctx) error {
@@ -50,7 +50,19 @@ func Register(c *fiber.Ctx) error {
 	var data map[string]string
 
 	if err := c.BodyParser(&data); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Erreur d'analyse du corps de la requête Golang."})
+	}
+
+	// Vérifier si l'utilisateur existe déjà (un utilisateur peut utiliser la même adresse Mail pour plusieurs compte utilisateur différents, seul le  nom d'utilisateur doit changer)
+	var existingUser int
+	err := database.DB.QueryRow("SELECT COUNT(*) FROM user_account WHERE username = $1", data["username"]).Scan(&existingUser)
+	if err != nil {
 		return err
+	}
+
+	if existingUser > 0 {
+		// L'utilisateur existe déjà, renvoyer une réponse appropriée
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error":"L'utilisateur existe déjà"})
 	}
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(data["password"]), bcrypt.DefaultCost)
@@ -68,8 +80,9 @@ func Register(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+	fmt.Print("L'utilisateur suivant est bien enregistré: ", data["username"], data["email"])
 
-	return c.JSON(fiber.Map{"message": "Enregistrement de l'utilisateur réussie !"})
+	return c.JSON(fiber.Map{"success":true, "message": "Enregistrement de l'utilisateur réussie !"})
 }
 
 // Connexion
@@ -122,39 +135,40 @@ func Login(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"message": "Connexion au compte réussi.",
+		"redirect": "/",
 	})
 }
 
 func User(c *fiber.Ctx) error {
-    cookie := c.Cookies("jwt")
-    token, err := jwt.ParseWithClaims(cookie, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
-        return []byte(SecretKey), nil
-    })
-    if err != nil {
-        fmt.Println(err)
-        c.Status(fiber.StatusUnauthorized)
-        return c.JSON(fiber.Map{
-            "message": "Authentification échouée.",
-        })
-    }
-    claims := token.Claims.(*jwt.RegisteredClaims)
+	cookie := c.Cookies("jwt")
+	token, err := jwt.ParseWithClaims(cookie, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(SecretKey), nil
+	})
+	if err != nil {
+		fmt.Println(err)
+		c.Status(fiber.StatusUnauthorized)
+		return c.JSON(fiber.Map{
+			"message": "Authentification échouée.",
+		})
+	}
+	claims := token.Claims.(*jwt.RegisteredClaims)
 
-    // Utilisation de QueryRow pour récupérer les informations de l'utilisateur
-    row := database.DB.QueryRow(`
+	// Utilisation de QueryRow pour récupérer les informations de l'utilisateur
+	row := database.DB.QueryRow(`
         SELECT id, username, email FROM user_account WHERE id = $1
     `, claims.Issuer)
 
-    var user models.User
-    err = row.Scan(&user.ID, &user.Username, &user.Email)
-    if err != nil {
-        fmt.Println(err)
-        c.Status(fiber.StatusInternalServerError)
-        return c.JSON(fiber.Map{
-            "message": "Erreur lors de la récupération des informations de l'utilisateur.",
-        })
-    }
+	var user models.User
+	err = row.Scan(&user.ID, &user.Username, &user.Email)
+	if err != nil {
+		fmt.Println(err)
+		c.Status(fiber.StatusInternalServerError)
+		return c.JSON(fiber.Map{
+			"message": "Erreur lors de la récupération des informations de l'utilisateur.",
+		})
+	}
 
-    return c.JSON(user)
+	return c.JSON(user)
 }
 
 func Logout(c *fiber.Ctx) error {

@@ -9,11 +9,6 @@ import (
 	"github.com/stevenyambos/hmmm-backend/routes"
 )
 
-type RegisterRequest struct {
-	Username string
-	Email    string
-	Password string
-}
 
 func main() {
 

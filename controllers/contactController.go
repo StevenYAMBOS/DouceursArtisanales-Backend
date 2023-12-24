@@ -82,5 +82,4 @@ func sendEmail(senderEmail string, contact models.Contact) error {
 	fmt.Println("Email envoyé avec succès !")
 
 	return err
-
 }
